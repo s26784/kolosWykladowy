@@ -17,7 +17,7 @@ public class PrescriptionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPrescriptionsAsync(string doctorLastName)
+    public async Task<IActionResult> GetPrescriptionsAsync(string doctorLastName = "default")
     {
         var prescriptionsList = await _prescriptionsService.GetPrescriptionsAsync(doctorLastName);
         return Ok(prescriptionsList);
