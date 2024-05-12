@@ -14,26 +14,44 @@ public class PrescriptionsRepository : IPrescriptionsRepository
         _configuration = configuration;
     }
 
-    public async Task<List<string>> GetPrescriptionsAsync(string doctorLastName)
+    public async Task<List<List<string>>> GetPrescriptionsAsync(string doctorLastName)
     {
         using (SqlConnection connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]))
         {
-            var nameFilter = FilterByNameAsync(doctorLastName);
+            var nameFilter = FilterByNameAsync(doctorLastName).Result;
+            
+            
+            
             await using var command = new SqlCommand();
-            command.CommandText = "SELECT * FROM PRESCRIPTION p JOIN Doctor d ON p.IdDoctor = d.IdDoctor JOIN Patient pt ON pt.IdPatient = p.IdPatient" + nameFilter + " ORDER BY DESCENDING";
+            command.CommandText = "SELECT IdPrescription, Date, DueDate, pt.LastName AS PatientLastName, d.LastName AS DoctorLastName FROM PRESCRIPTION p JOIN Doctor d ON p.IdDoctor = d.IdDoctor JOIN Patient pt ON pt.IdPatient = p.IdPatient" + nameFilter + " ORDER BY d.LastName DESC";
             command.Connection = connection;
             await connection.OpenAsync();
-            List<Prescription> prescriptions = new List<Prescription>();
-            var dr = await command.ExecuteReaderAsync();
-            while (dr.ReadAsync().Result)
+            var returnList = new List<List<string>>();
+            await using SqlDataReader dr = await command.ExecuteReaderAsync();
+            while (await dr.ReadAsync())
             {
-                int idPrescription = (int)dr["IdPrescription"];
-                string date
+                
+                
+                string idPrescription = Convert.ToString(dr["IdPrescription"]);
+                DateTime dateTimeValue = (DateTime)dr["Date"];
+                string date = dateTimeValue.ToString("yyyy-MM-dd");
+                DateTime dateDue = (DateTime)dr["DueDate"];
+                string dueDate = dateDue.ToString("yyyy-MM-dd");
+                string patientLastname = (string)dr["PatientLastName"];
+                string doctorLastname = (string)dr["DoctorLastName"];
+                
+                
+                
+                List<string> prescriptionInfo = new List<string>();
+                prescriptionInfo.Add(idPrescription);
+                prescriptionInfo.Add(date);
+                prescriptionInfo.Add(dueDate);
+                prescriptionInfo.Add(patientLastname);
+                prescriptionInfo.Add(doctorLastname);
+                returnList.Add(prescriptionInfo);
             }
-
-
+            return returnList;
         }
-        
     }
     
     public async Task<Prescription> AddPrescriptionAsync(PrescriptionDTO prescriptionDto)
@@ -43,11 +61,11 @@ public class PrescriptionsRepository : IPrescriptionsRepository
 
     public async Task<string> FilterByNameAsync(string doctorLastName)
     {
-        var doctorsLastNames = await GetDoctorsLastNames();
+        var doctorsLastNames = GetDoctorsLastNames().Result;
         if (doctorsLastNames.Contains(doctorLastName.ToLower()))
         {
             string correctedName = char.ToUpper(doctorLastName[0]) + doctorLastName.Substring(1);
-            return " WHERE LastName = " + correctedName;
+            return " WHERE d.LastName = '" + correctedName + "'";
         }
         if(doctorLastName.Equals("default"))
         {
@@ -63,10 +81,11 @@ public class PrescriptionsRepository : IPrescriptionsRepository
         using (SqlConnection connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]))
         {
             await using var command = new SqlCommand();
-            command.CommandText = "SELECT LastName FROM Doctor";
+            command.Connection = connection;
+            command.CommandText = "SELECT LastName FROM Doctor ";
             await connection.OpenAsync();
             await using SqlDataReader dataReader = await command.ExecuteReaderAsync();
-            while (dataReader.ReadAsync().Result)
+            while (await dataReader.ReadAsync())
             {
                 string name = (string)dataReader["LastName"];
                 lastNamesList.Add(name.ToLower());

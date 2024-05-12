@@ -1,4 +1,5 @@
 ﻿using KolosGago.DTO;
+using KolosGago.Interfaces;
 using KolosGago.Models;
 using KolosGago.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace KolosGago.Controllers;
 
 public class PrescriptionsController : ControllerBase
 {
-    private PrescriptionsService _prescriptionsService;
+    private IPrescriptionsService _prescriptionsService;
 
-    public PrescriptionsController(PrescriptionsService prescriptionsService)
+    public PrescriptionsController(IPrescriptionsService prescriptionsService)
     {
         _prescriptionsService = prescriptionsService;
     }

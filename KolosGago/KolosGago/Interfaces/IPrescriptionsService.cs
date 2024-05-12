@@ -7,5 +7,5 @@ namespace KolosGago.Interfaces;
 public interface IPrescriptionsService
 {
     Task<Prescription> AddPrescriptionAsync(PrescriptionDTO prescriptionDto);
-    Task<string> GetPrescriptionsAsync(string doctorLastName);
+    Task<List<List<string>>> GetPrescriptionsAsync(string doctorLastName);
 }

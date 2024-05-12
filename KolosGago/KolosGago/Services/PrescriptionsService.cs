@@ -18,7 +18,7 @@ public class PrescriptionsService : IPrescriptionsService
         return _prescriptionsRepository.AddPrescriptionAsync(prescriptionDto);
     }
 
-    public Task<List<Prescription>> GetPrescriptionsAsync(string doctorLastName)
+    public Task<List<List<string>>> GetPrescriptionsAsync(string doctorLastName)
     {
         return _prescriptionsRepository.GetPrescriptionsAsync(doctorLastName);
     }
